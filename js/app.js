@@ -4,16 +4,30 @@ const selectField = document.getElementById('title');
 const selectedDesign = document.getElementById('design');
 const shirtColors = document.getElementById('color');
 const colorMenuSection = document.getElementById('colors-js-puns');
-
+const activities = document.querySelector('.activities');
+const checkBoxes = activities.querySelectorAll("[type='checkbox']");
+const payment = document.querySelector('#payment');
+const creditCard = document.querySelector('#credit-card');
+const payPalInfo = creditCard.nextElementSibling;
+const bitCoinInfo = payPalInfo.nextElementSibling;
+const emailField = document.querySelector('#mail');
 
 // When the page loads, give focus to the first text field
 window.onload = function() {
   document.getElementById('name').focus();
   hideColorMenu();
+  hideExtraPaymentInfo()
+  hideOtherBox()
 };
 
 // ”Job Role” section of the form:
 // A text field that will be revealed when the "Other" option is selected from the "Job Role" drop down menu.
+
+function hideOtherBox() {
+  const otherBox = document.getElementById('other-role');
+  otherBox.style.display = 'none';
+}
+
 function otherTitleInput () {
   const otherTitle = document.createElement("INPUT");
   otherTitle.setAttribute("type", "text");
@@ -69,11 +83,6 @@ selectedDesign.onchange = function(){
 }
 
 // ”Register for Activities” section of the form:
-
-const activities = document.querySelector('.activities');
-const checkBoxes = activities.querySelectorAll("[type='checkbox']");
-
-
 // const incompatibles
   const tuesMorning = [1,3],
         tuesAfternoon = [2,4];
@@ -118,10 +127,8 @@ function getSum() {
   let dollars = [];
 
   let sum = activities.querySelectorAll('input[type="checkbox"]:checked');
-  console.log(sum);
   for (i =0; i < sum.length; i++) {
     let activity = sum[i].parentNode.innerHTML;
-    console.log(activity);
       dollars.push(parseInt( activity.slice(-3) ));
   }
   function addUp(total, num) {
@@ -129,13 +136,10 @@ function getSum() {
   }
 
   let sumUp = "Total: $" + dollars.reduce(addUp, 0).toString();
-  console.log(dollars);
-  console.log(sumUp);
   return sumUp;
 }
 
 function removeOldTotal(){
-  console.log(activities.childNodes.length);
   if(activities.childNodes.length > 17) {
     let lastNode = activities.lastChild;
     activities.removeChild(lastNode);
@@ -155,3 +159,142 @@ activities.onchange = function() {
   disableIncompatible(tuesAfternoon);
   showTotal();
 }
+//Payment Info section of the form:
+// Display payment sections based on the payment option chosen in the select menu
+// The "Credit Card" payment option should be selected by default, display the #credit-card div
+payment.options[1].selected = true;
+//Hide the "Paypal" and "Bitcoin information.
+let payElements = ['0', creditCard, payPalInfo, bitCoinInfo];
+
+function hideExtraPaymentInfo() {
+  payPalInfo.style.display = "none";
+  bitCoinInfo.style.display = "none";
+}
+// When a user selects the "PayPal" payment option, the Paypal information should display, and the credit card and “Bitcoin” information should be hidden.
+// When a user selects the "Bitcoin" payment option, the Bitcoin information should display, and the credit card and “PayPal” information should be hidden.
+function hideUnselectedPayment(sel){
+  for (i = 1; i < payElements.length; i++) {
+    if (sel != i) {
+      payElements[i].style.display = "none";
+    }
+  }
+}
+
+function showSelected() {
+  let sel = payment.selectedIndex;
+  if (sel === 0) {return;}
+  payElements[sel].style.display = "block";
+  hideUnselectedPayment(sel);
+}
+
+payment.onchange = function(){
+  showSelected();
+}
+
+// Form Validation
+const form = document.querySelector("form");
+
+//START HERE: Finish tooltip code, then add it to all fields with border color red until validation complete.  Not on fields where required has been set except maybe the cc info.
+function validationMessage(el, message) {
+  const errorText = document.createElement('H3')
+  errorText.innerHTML = message;
+  errorText.style.color = 'red';
+  errorText.style.fontStyle = "italic";
+  const parent = el.parentNode;
+  parent.insertBefore(errorText, el);
+  console.log(errorText);
+  console.log(el);
+}
+
+function borderRedValidation(el) {
+  el.style.borderColor = "red";
+}
+
+// If any of the following validation errors exist, prevent the user from submitting the form:
+// Name field can't be blank
+const nameField = document.querySelector('#name');
+nameField.required = "true";
+
+// Must select at least one checkbox under the "Register for Activities" section of the form.
+  function checkBoxChecked() {
+    let atLeastOne = false;
+    for (i = 0; i < checkBoxes.length; i ++) {
+      if (checkBoxes[i].checked) {
+            atLeastOne = true;
+        }
+      }
+      if(!atLeastOne) {
+        const invalidmsg = "Please choose at least one activity";
+        validationMessage(activities, invalidmsg);
+        activities.focus();
+      }
+    }
+
+// If the selected payment option is "Credit Card," make sure the user has supplied a credit card number, a zip code, and a 3 number CVV value before the form can be submitted.
+function creditCardValid() {
+  if (payment.options[1].selected) {
+    const ccNum = document.querySelector('#cc-num');
+    ccNum.required = "true";
+    // Credit card field should only accept a number between 13 and 16 digits
+    ccNum.setAttribute("maxlength", "16");
+    ccNum.setAttribute("minlength", "13");
+    if (!ccNum.innerHTML.length) {
+      const invalidmsg = "Please enter valid credit card information.";
+      validationMessage(payment, invalidmsg);
+    }
+    const ccZip = document.querySelector('#zip');
+    ccZip.required = "true";
+    // The zipcode field should accept a 5-digit number
+    ccZip.setAttribute("minlength", "5");
+    const ccCvv = document.querySelector('#cvv');
+    ccCvv.required = "true";
+    // The CVV should only accept a number that is exactly 3 digits long
+    ccCvv.setAttribute("maxlength", "3");
+    ccCvv.setAttribute("minlength", "3");
+  }
+}
+
+// Email field must be a validly formatted e-mail address (you don't have to check that it's a real e-mail address, just that it's formatted like one: dave@teamtreehouse.com for example.
+function ValidateEmail(mailField) {
+  let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if(mailField.value.match(mailformat)) {
+      return;
+    }
+    else
+    {
+      const invalidmsg = "Please enter a valid email address.";
+      borderRedValidation(mailField)
+      validationMessage(emailField, invalidmsg);
+      emailField.focus();
+    }
+  }
+
+emailField.onkeydown = function(){
+  let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if(emailField.value.match(mailformat)) {
+      emailField.style.borderColor = "green";
+      document.getElementById("errorText").remove();
+      return;
+    }
+    else {
+      const errorText = document.createElement('P')
+      if (document.contains(document.getElementById("errorText"))) {
+            document.getElementById("errorText").remove();
+          }
+      const invalidmsg = "Please enter a valid email address.";
+      emailField.style.borderColor = "red";
+      errorText.innerHTML = invalidmsg;
+      errorText.style.color = 'red';
+      errorText.style.fontStyle = "italic";
+      const parent = emailField.parentNode;
+      parent.insertBefore(errorText, emailField);
+      errorText.setAttribute('id', "errorText");
+    }
+  }
+
+  form.onsubmit = function(e) {
+    e.preventDefault();
+    ValidateEmail(emailField);
+    checkBoxChecked();
+    creditCardValid();
+  }
