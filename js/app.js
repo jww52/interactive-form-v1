@@ -205,7 +205,7 @@ function validationMessage(el, message) {
   console.log(errorText);
   console.log(el);
 }
-
+//create red border for input validation
 function borderRedValidation(el) {
   el.style.borderColor = "red";
 }
@@ -268,7 +268,7 @@ function ValidateEmail(mailField) {
       emailField.focus();
     }
   }
-
+//Live field validation of email box
 emailField.onkeydown = function(){
   let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     if(emailField.value.match(mailformat)) {
@@ -291,7 +291,7 @@ emailField.onkeydown = function(){
       errorText.setAttribute('id', "errorText");
     }
   }
-
+//Call all validation functions
   form.onsubmit = function(e) {
     e.preventDefault();
     ValidateEmail(emailField);
