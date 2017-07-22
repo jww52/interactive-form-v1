@@ -6,6 +6,7 @@ const shirtColors = document.getElementById('color');
 const colorMenuSection = document.getElementById('colors-js-puns');
 const activities = document.querySelector('.activities');
 const checkBoxes = activities.querySelectorAll("[type='checkbox']");
+const activitiesLegend = activities.querySelectorAll("legend");
 const payment = document.querySelector('#payment');
 const creditCard = document.querySelector('#credit-card');
 const payPalInfo = creditCard.nextElementSibling;
@@ -18,6 +19,7 @@ window.onload = function() {
   hideColorMenu();
   hideExtraPaymentInfo()
   hideOtherBox()
+  console.log(activitiesLegend);
 };
 
 // ”Job Role” section of the form:
@@ -200,10 +202,10 @@ function validationMessage(el, message) {
   errorText.innerHTML = message;
   errorText.style.color = 'red';
   errorText.style.fontStyle = "italic";
+  errorText.setAttribute('id', 'errorMessage');
   const parent = el.parentNode;
+  console.log(el)
   parent.insertBefore(errorText, el);
-  console.log(errorText);
-  console.log(el);
 }
 //create red border for input validation
 function borderRedValidation(el) {
@@ -216,29 +218,54 @@ const nameField = document.querySelector('#name');
 nameField.required = "true";
 
 // Must select at least one checkbox under the "Register for Activities" section of the form.
-  function checkBoxChecked() {
+  function atLeastOne() {
     let atLeastOne = false;
     for (i = 0; i < checkBoxes.length; i ++) {
       if (checkBoxes[i].checked) {
             atLeastOne = true;
         }
-      }
-      if(!atLeastOne) {
-        const invalidmsg = "Please choose at least one activity";
-        validationMessage(activities, invalidmsg);
-        activities.focus();
+        return atLeastOne;
       }
     }
 
+  function checkBoxChecked(e) {
+      let atLeastOneBox = atLeastOne();
+      console.log(atLeastOneBox)
+      if(!atLeastOneBox) {
+        e.preventDefault();
+        checkBoxes[0].focus();
+        let checkBoxError = true;
+        const invalidmsg = "Please choose at least one activity";
+        validationMessage(activitiesLegend[0], invalidmsg);
+        activities.focus();
+        return checkBoxError;
+      }
+    }
+
+    allCheckBoxes = document.querySelector('fieldset.activities');
+    allCheckBoxes.onchange = function (){
+      let checkBoxErrorNow = checkBoxChecked();
+      console.log('checkBoxes.onchange')
+      console.log('allCheckBoxes', allCheckBoxes)
+      if(checkBoxErrorNow = true) {
+        const error = document.querySelector('fieldset.activities #errorMessage');
+        console.log('error', error)
+        allCheckBoxes.removeChild(allCheckBoxes.childNodes[1])
+      }
+    }
+
+
 // If the selected payment option is "Credit Card," make sure the user has supplied a credit card number, a zip code, and a 3 number CVV value before the form can be submitted.
-function creditCardValid() {
+function creditCardValid(e) {
   if (payment.options[1].selected) {
     const ccNum = document.querySelector('#cc-num');
     ccNum.required = "true";
     // Credit card field should only accept a number between 13 and 16 digits
     ccNum.setAttribute("maxlength", "16");
     ccNum.setAttribute("minlength", "13");
-    if (!ccNum.innerHTML.length) {
+    const number = ccNum.value;
+    if ( number.length < 13 || number.length > 16) {
+      e.preventDefault();
       const invalidmsg = "Please enter valid credit card information.";
       validationMessage(payment, invalidmsg);
     }
@@ -246,22 +273,29 @@ function creditCardValid() {
     ccZip.required = "true";
     // The zipcode field should accept a 5-digit number
     ccZip.setAttribute("minlength", "5");
+    if (ccZip.value.length < 5) {e.preventDefault();}
+
     const ccCvv = document.querySelector('#cvv');
     ccCvv.required = "true";
     // The CVV should only accept a number that is exactly 3 digits long
     ccCvv.setAttribute("maxlength", "3");
     ccCvv.setAttribute("minlength", "3");
+    if (ccCvv.value.length !== 3) {
+      e.preventDefault();
+    }
   }
 }
 
 // Email field must be a validly formatted e-mail address (you don't have to check that it's a real e-mail address, just that it's formatted like one: dave@teamtreehouse.com for example.
-function ValidateEmail(mailField) {
+function ValidateEmail(e, mailField) {
   let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     if(mailField.value.match(mailformat)) {
       return;
     }
     else
     {
+      e.preventDefault();
+      mailField.focus();
       const invalidmsg = "Please enter a valid email address.";
       borderRedValidation(mailField)
       validationMessage(emailField, invalidmsg);
@@ -293,8 +327,7 @@ emailField.onkeydown = function(){
   }
 //Call all validation functions
   form.onsubmit = function(e) {
-    e.preventDefault();
-    ValidateEmail(emailField);
-    checkBoxChecked();
-    creditCardValid();
+    ValidateEmail(e, emailField);
+    checkBoxChecked(e);
+    creditCardValid(e);
   }
